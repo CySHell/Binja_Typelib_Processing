@@ -2,7 +2,7 @@ from clang.cindex import *
 from .Libraries.ws2_32 import ws2_32 as ws2
 import binaryninja as bn
 from .Libraries.ntdll import ntdll_dll as ntdll
-
+from . import directories_config
 from . import ast_handlers
 
 
@@ -23,7 +23,7 @@ def pre_define_types(bv: bn.BinaryView, library):
 def pp(bv: bn.BinaryView):
     pre_define_types(bv, ntdll)
 
-    Config.set_library_file('C:\\Program Files\\LLVM\\bin\\libclang.dll')
+    Config.set_library_file(directories_config.libclang_library_file)
     index: Index = Index.create()
     tu: TranslationUnit = index.parse(ntdll.header_list[0], args=ntdll.pre_proccessor_args)  # args for clang parser
 
@@ -34,7 +34,7 @@ def pp(bv: bn.BinaryView):
                          f'node.kind: {node.kind}, node.type.kind: {node.type.kind}\n {"*" * 30}')
         ast_handlers.define_type(node, bv)
 
-
+    # Create the type lib from the parsed types
     ####################################################################
     ntdll_tl = bn.TypeLibrary.new(bn.Architecture["x86"], "ntdll.dll")
     ntdll_tl.add_platform(bn.Platform["windows-x86"])
@@ -46,5 +46,5 @@ def pp(bv: bn.BinaryView):
         if isinstance(var_type, bn.Type):
             bv.export_type_to_library(ntdll_tl, node.spelling, var_type)
     ntdll_tl.finalize()
-    ntdll_tl.write_to_file('C:\\Users\\rowr1\\OneDrive\\Header-Files\\BinaryNinja type libraries\\ntdll_type_lib.btl')
+    ntdll_tl.write_to_file(directories_config.base_proccessed_header_folder + 'ntdll_type_lib.btl')
     ###################################################################
